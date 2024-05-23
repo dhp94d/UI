@@ -1,5 +1,5 @@
 {
-  "name": "@golfzon-ui/esbuild",
+  "name": "@ui/esbuild",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
