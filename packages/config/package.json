@@ -1,0 +1,15 @@
+{
+  "name": "@golfzon-ui/config",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "scripts": {
+      "build": "tsc -b packages/*"
+    },
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
