@@ -1,7 +1,7 @@
 import { fetchFigmaNodesByFileName } from '@figma/src/api/index';
 import { dfsGenerator, getTextStyleObj, type TargetTypeData } from '@figma/src/utils';
 
-const rgbaToHex = (r: number, g: number, b: number, a: number): string => {
+const rgbaToHex = (r: number, g: number, b: number): string => {
   const toHex = (value: number): string => {
     const hex = Math.round(value * 255)
       .toString(16)
@@ -9,14 +9,10 @@ const rgbaToHex = (r: number, g: number, b: number, a: number): string => {
     return hex.toUpperCase();
   };
 
-  const alpha = Math.round(a * 255)
-    .toString(16)
-    .padStart(2, '0')
-    .toUpperCase();
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}${alpha}`;
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 };
 
-const getElevationCssClassList = async () => {
+export const getColorCssClassList = async () => {
   const result = [];
   const colorNode = (await fetchFigmaNodesByFileName('color')).nodes;
 
@@ -31,14 +27,14 @@ const getElevationCssClassList = async () => {
     if (node.type === 'RECTANGLE' && node.styles && colorKeyList.includes(node.styles.fill ?? '')) {
       const fills = node.fills[0];
       if (fills && fills.type === 'SOLID') {
-        const { r, g, b, a } = fills.color;
-        const color = rgbaToHex(r, g, b, a);
-        result.push(`--color-${colorList[node.styles.fill].name.replaceAll('/', '-')}: ${color};`);
+        console.log(colorList[node.styles.fill].name);
+        if (colorList[node.styles.fill].name.includes(' ')) continue;
+        const { r, g, b } = fills.color;
+        const color = rgbaToHex(r, g, b);
+        result.push(`--color-${colorList[node.styles.fill].name.replaceAll('/', '-')}: ${color.trim()};`);
       }
     }
   }
 
-  console.log([...new Set(result)]);
+  return [...new Set(result)];
 };
-
-getElevationCssClassList();

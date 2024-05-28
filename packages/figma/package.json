@@ -1,11 +1,13 @@
 {
-  "name": "@ui/figma",
+  "name": "@golfzon-ui/figma",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon ./dist/index.js",
+    "start": "nodemon ./dist/icon/index.js",
+    "icon":"node ./dist/icon/index.js",
+    "start:css": "node ./dist/index.js",
     "watch:js": "nodemon --exec 'node --experimental-json-modules build.js --watch' --watch src"
   },
   "keywords": [],
@@ -13,7 +15,7 @@
   "license": "ISC",
   "devDependencies": {
     "@figma/rest-api-spec": "^0.13.0",
-    "@ui/esbuild": "workspace:^",
+    "@golfzon-ui/esbuild": "workspace:^",
     "@types/node": "^20.12.12",
     "nodemon": "^3.1.0",
     "ts-node": "^10.9.2"

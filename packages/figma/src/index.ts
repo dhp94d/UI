@@ -1,33 +1,67 @@
-import { fetchFigmaNodesByFileName } from './api/index'; // 실제 파일 경로에 맞게 조정
-import { writeFile } from 'fs/promises';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'fs';
+import { getColorCssClassList } from '@figma/src/color/index';
+import { getElevationCssClassList } from '@figma/src/elevation/index';
+import { getLayoutCssClassList } from '@figma/src/layout/index';
+import { getTypographyCssClassList } from '@figma/src/typography/index';
 
-import { FoundationType } from '../type';
+const generator = async () => {
+  const [colorClasses, elevationClasses, layoutClasses, typographyClasses] = await Promise.all([
+    getColorCssClassList(),
+    getElevationCssClassList(),
+    getLayoutCssClassList(),
+    getTypographyCssClassList(),
+  ]);
 
-console.log(import.meta.url);
-// __filename 및 __dirname 정의 (ESM에서 사용)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+  const combinedClasses = [...colorClasses, ...layoutClasses, ...elevationClasses, ...typographyClasses];
 
-async function saveFigmaDataToFile(fileName: FoundationType): Promise<void> {
-  try {
-    // fetchFigmaNodesByFileName의 반환 타입을 명시합니다.
-    const data: unknown = await fetchFigmaNodesByFileName(fileName);
-    console.log(data);
-    const jsonData: string = JSON.stringify(data, null, 2); // 데이터 포맷
+  await Promise.all([generateCss(combinedClasses), generateJson(combinedClasses)]);
+};
 
-    // 파일 경로 설정
-    const filePath: string = path.join(__dirname, `${fileName}.json`);
+const generateCss = async (classList: string[]) => {
+  const selector = ':root';
+  const data = `${selector} {\n${classList.join('\n')}\n}`;
 
-    console.log(filePath);
-    // 파일 쓰기
-    await writeFile(filePath, jsonData, 'utf8');
-    console.log(`Data saved to ${filePath}`);
-  } catch (error) {
-    console.error('Error fetching or saving data:', error);
-  }
+  fs.writeFileSync('dist/foundation.css', data);
+};
+
+interface KeyValueObject {
+  [key: string]: string | KeyValueObject;
 }
 
-// 함수 실행 예제
-saveFigmaDataToFile('layout');
+const generateJson = async (classList: string[]) => {
+  const result: KeyValueObject = {};
+
+  classList.forEach((list) => {
+    if (list.startsWith('--')) {
+      const [key, value] = list.replaceAll(' ', '').split(':');
+      result[key] = value;
+    }
+
+    if (list.startsWith('.')) {
+      const [key, ...subList] = list.replaceAll(' ', '').replace(/\n\}|\./g, '').split('{\n');
+
+      result[key] = {};
+
+      subList.forEach((subString) => {
+        if (!subString.includes('\n')) {
+          const [subKey, value] = subString.split(':');
+          (result[key] as KeyValueObject)[subKey] = value;
+          return;
+        }
+
+        subString.split('\n').forEach((targetString) => {
+          if (!targetString.includes('\n')) {
+            const [subKey, value] = targetString.split(':');
+            (result[key] as KeyValueObject)[subKey] = value;
+            return;
+          }
+        });
+      });
+    }
+  });
+
+  const jsonString = JSON.stringify(result, null, 2);
+  fs.writeFileSync('dist/foundation.json', jsonString, 'utf8');
+};
+
+generator();

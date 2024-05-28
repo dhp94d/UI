@@ -1,15 +1,7 @@
 import { fetchFigmaNodesByFileName } from '@figma/src/api/index';
 import { dfsGenerator, getTextStyleObj, type TargetTypeData } from '@figma/src/utils';
 
-interface TypoStyle {
-  fontSize: string;
-  fontWeight: string;
-  fontStyle: 'normal';
-  lineHeight: string;
-  letterSpacing: string;
-}
-
-const getTypographyCssClassList = async () => {
+export const getTypographyCssClassList = async () => {
   const result = [];
 
   const typoNode = (await fetchFigmaNodesByFileName('typography')).nodes;
@@ -26,17 +18,14 @@ const getTypographyCssClassList = async () => {
       const { fontSize, fontWeight, lineHeightPercentFontSize, letterSpacing } = node.style;
 
       result.push(
-        `.${typoList[node.styles.text].name.replaceAll('/', '_')} {
-          font-size: ${fontSize}px;
-          font-weight: ${fontWeight};
-          font-style: normal;
-          line-height: ${lineHeightPercentFontSize}%;
-          letter-spacing: ${letterSpacing}px;
-      }`,
+        `.typo-${typoList[node.styles.text].name
+          .replaceAll('/', '-')
+          .replaceAll(
+            '_',
+            '-',
+          )} {\nfont-size: ${fontSize}px;\nfont-weight: ${fontWeight};\nfont-style: normal;\nline-height: ${lineHeightPercentFontSize}%;\nletter-spacing: ${letterSpacing}px;\n}`,
       );
     }
   }
-  console.log([...new Set(result)]);
+  return [...new Set(result)];
 };
-
-getTypographyCssClassList();

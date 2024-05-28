@@ -1,44 +1,23 @@
 import { fetchFigmaNodesByFileName } from '@figma/src/api/index';
-import { dfsGenerator, getTextStyleObj, type TargetTypeData } from '@figma/src/utils';
+import { dfsGenerator } from '@figma/src/utils';
 
-const rgbaToHex = (r: number, g: number, b: number, a: number): string => {
-  const toHex = (value: number): string => {
-    const hex = Math.round(value * 255)
-      .toString(16)
-      .padStart(2, '0');
-    return hex.toUpperCase();
-  };
-
-  const alpha = Math.round(a * 255)
-    .toString(16)
-    .padStart(2, '0')
-    .toUpperCase();
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}${alpha}`;
-};
-
-const getElevationCssClassList = async () => {
+export const getLayoutCssClassList = async () => {
   const result = [];
-  const colorNode = (await fetchFigmaNodesByFileName('color')).nodes;
+  const layoutNode = (await fetchFigmaNodesByFileName('layout')).nodes;
 
-  let colorList = Object.keys(colorNode).reduce((acc, nodeKey) => {
-    return { ...acc, ...getTextStyleObj(colorNode[nodeKey].styles, 'FILL') };
-  }, {} as TargetTypeData);
-  const colorKeyList = Object.keys(colorList);
-
-  const generator = dfsGenerator(colorNode);
+  const generator = dfsGenerator(layoutNode);
 
   for (const node of generator) {
-    if (node.type === 'RECTANGLE' && node.styles && colorKeyList.includes(node.styles.fill ?? '')) {
-      const fills = node.fills[0];
-      if (fills && fills.type === 'SOLID') {
-        const { r, g, b, a } = fills.color;
-        const color = rgbaToHex(r, g, b, a);
-        result.push(`--color-${colorList[node.styles.fill].name.replaceAll('/', '-')}: ${color};`);
+    if (node.type === 'FRAME' && node.name.includes('spacing_')) {
+      if (node.children[0].type === 'FRAME' && node.children[0].children[0].type === 'RECTANGLE') {
+        const targetNode = node.children[0].children[0];
+        result.push(`--layout-${node.name.replace('_', '-')}: ${targetNode.absoluteBoundingBox?.height}px;`);
       }
     }
   }
+  const radius = ['default', 'half', 'full'].map((type, index) => {
+    return `--layout-radius-${type}: ${Math.pow(2, index + 2)}px;`;
+  });
 
-  console.log([...new Set(result)]);
+  return [...result, ...radius];
 };
-
-getElevationCssClassList();
